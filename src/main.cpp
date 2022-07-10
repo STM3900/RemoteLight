@@ -19,7 +19,10 @@ const int buttonGreenPin = 13;
 const int buttonBluePin = 15;
 
 const int buttonArrPin = 12;
-const int ledPin = 4;
+
+const int ledRedPin = 4;
+const int ledGreenPin = 0;
+const int ledBluePin = 2;
 
 char *topicWhite = "white";
 char *topicRed = "red";
@@ -29,6 +32,9 @@ char *topicArr = "arr";
 
 bool isPressed = false;
 bool lightStatus = false;
+bool isOn = false;
+
+int retries = 0;
 
 // Initialisation du module Wifi et du service PubSub
 WiFiClient espClient;
@@ -50,13 +56,39 @@ void callback(char *topic, byte *payload, unsigned int length)
   }
   Serial.print(message);
 
-  if (message == "arr")
-  {
-    digitalWrite(ledPin, HIGH);
-  }
-
   Serial.println();
   Serial.println("-----------------------");
+}
+
+void setRGBLight(int red, int green, int blue)
+{
+  analogWrite(ledRedPin, red);
+  analogWrite(ledGreenPin, green);
+  analogWrite(ledBluePin, blue);
+}
+
+void toggleLed(int red, int green, int blue)
+{
+  if (isOn)
+  {
+    setRGBLight(red, green, blue);
+    isOn = false;
+  }
+  else
+  {
+    setRGBLight(0, 0, 0);
+    isOn = true;
+  }
+}
+
+void fadeGreenLedDown(int beginValue, int endValue, int transitionTime)
+{
+  int counter = beginValue - endValue;
+  for (int i = 0; i < counter; i++)
+  {
+    setRGBLight(0, beginValue - i, 0);
+    delay(transitionTime / counter);
+  }
 }
 
 void setup()
@@ -71,19 +103,37 @@ void setup()
   pinMode(buttonBluePin, INPUT);
 
   pinMode(buttonArrPin, INPUT);
-  pinMode(ledPin, OUTPUT);
+
+  pinMode(ledRedPin, OUTPUT);
+  pinMode(ledGreenPin, OUTPUT);
+  pinMode(ledBluePin, OUTPUT);
 
   // Initialisation du wifi
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
+  setRGBLight(0, 0, 63);
+
+  Serial.println();
+  Serial.print("Connexion du réseau : ");
+  Serial.print(ssid);
 
   // Reste dans cette boucle tant que l'on n'est pas connecté au wifi
-  while (WiFi.status() != WL_CONNECTED)
+  while (WiFi.status() != WL_CONNECTED && retries < 30)
   {
     delay(500);
-    Serial.println("Connecting to WiFi..");
+    toggleLed(0, 0, 63);
+    Serial.print(".");
+    retries++;
   }
-  Serial.println("Connected to the WiFi network");
+
+  if (retries >= 30)
+  {
+    setRGBLight(63, 0, 0);
+    while (true)
+    {
+    }
+  }
+  Serial.println("Connecté au wifi !");
 
   // Initialisation de l'instance vers le serveur mqtt
   client.setServer(mqttServer, mqttPort);
@@ -92,22 +142,27 @@ void setup()
   // Tant qu'on est pas connecté au mqtt, on essaie
   while (!client.connected())
   {
-    Serial.println("Connecting to MQTT...");
+    Serial.println("Connexion au MQTT");
+    toggleLed(63, 0, 63);
 
-    if (client.connect("EspLamp", mqttUser, mqttPassword))
+    if (client.connect("espLamp", mqttUser, mqttPassword))
     {
 
-      Serial.println("connected");
+      Serial.println("Connecté au MQTT !");
     }
     else
     {
       Serial.print("failed with state ");
       Serial.print(client.state());
+      setRGBLight(63, 25, 0);
       delay(2000);
     }
   }
 
-  client.subscribe("arr");
+  setRGBLight(0, 63, 0);
+  Serial.println("Tout est ok !");
+
+  fadeGreenLedDown(63, 2, 2000);
 }
 
 void testToggleButton()
