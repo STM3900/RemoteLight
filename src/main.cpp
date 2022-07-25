@@ -2,15 +2,15 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 
-// WiFi
-const char *ssid = "Wii-Fit";          // Enter your WiFi name
-const char *password = "Gnocking1234"; // Enter WiFi password
+// WiFi (pour ceux qui regarde mes anciens commit y'a les id de mon wifi et du mqtt mais vu que tout a été fait sur vm ce sont de faux identifiants mais j'ai préféré enlever ça car plus propre)
+const char *ssid = "";          // Enter your WiFi name
+const char *password = ""; // Enter WiFi password
 
 // MQTT Broker
-const char *mqttServer = "192.168.1.49"; // mqttServer Ip
+const char *mqttServer = ""; // mqttServer Ip
 const int mqttPort = 1883;
-const char *mqttUser = "homeassistant";                                                        // User
-const char *mqttPassword = "Oghon2zae9em6ok7eixae4Quaeghahl6Kie5Diwio2eezoPh9Aedahghahkoh2ei"; // Password
+const char *mqttUser = ""; // User
+const char *mqttPassword = ""; // Password
 
 const int buttonSwitchPin = 16;
 const int buttonWhitePin = 5;
